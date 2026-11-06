@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from routers import crypto, stock
+from routers import crypto, stock, stream
 
 # Load environment variables from .env file
 load_dotenv()
@@ -8,12 +8,13 @@ load_dotenv()
 app = FastAPI(
     title = "FastTrade Feed API",
     description = "Real-Time Stock & Crypto Analytics API",
-    version = "0.2.0"
+    version = "0.2.1"
 )
 
-# Include routers for modular architecture
+# Include all modular routers
 app.include_router(crypto.router)
 app.include_router(stock.router)
+app.include_router(stream.router)
 
 
 @app.get("/")

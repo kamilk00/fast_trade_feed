@@ -10,7 +10,7 @@ load_dotenv()
 app = FastAPI(
     title = "FastTrade Feed API",
     description = "Real-Time Stock & Crypto Analytics API",
-    version = "0.2.2"
+    version = "0.2.3"
 )
 
 # Set up slowapi rate limiter state and error handler

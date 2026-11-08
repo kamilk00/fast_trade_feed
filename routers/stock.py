@@ -1,11 +1,16 @@
 import os
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 import httpx
 from pydantic import BaseModel, Field
 from services.cache import redis_client, CACHE_TTL_SECONDS
 from services.limiter import limiter
+from services.auth import verify_api_key
 
-router = APIRouter(prefix = "/stock", tags = ["Stocks"])
+router = APIRouter(
+    prefix = "/stock", 
+    tags = ["Stocks"],
+    dependencies = [Depends(verify_api_key)]
+)
 
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
@@ -25,7 +30,7 @@ class StockPriceResponse(BaseModel):
 async def get_stock_price(request: Request, symbol: str):
     """
     Fetch the current stock price from Finnhub API, 
-    backed by Redis caching and protected by rate limiting.
+    backed by Redis caching, rate limiting, and API key auth.
     """
     if not FINNHUB_API_KEY:
         raise HTTPException(

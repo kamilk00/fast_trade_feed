@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 import httpx
 from pydantic import BaseModel, Field
 from services.cache import redis_client, CACHE_TTL_SECONDS
+from services.limiter import limiter
 
 router = APIRouter(prefix = "/crypto", tags = ["Crypto"])
 
@@ -16,10 +17,11 @@ class CryptoPriceResponse(BaseModel):
 
 
 @router.get("/price/{symbol}", response_model = CryptoPriceResponse)
-async def get_crypto_price(symbol: str):
+@limiter.limit("10/minute")
+async def get_crypto_price(request: Request, symbol: str):
     """
     Fetch the current cryptocurrency price from Binance API, 
-    backed by Redis caching to prevent rate-limiting.
+    backed by Redis caching and protected by rate limiting.
     """
     formatted_symbol = symbol.upper()
     cache_key = f"crypto:price:{formatted_symbol}"
@@ -44,7 +46,7 @@ async def get_crypto_price(symbol: str):
         
         price = float(data.get("price"))
 
-        # 3. Save to Redis cache
+        # Save to Redis cache
         await redis_client.setex(cache_key, CACHE_TTL_SECONDS, price)
 
         return CryptoPriceResponse(
